@@ -1,0 +1,88 @@
+[mod]
+id = "voxel_skins"
+version = "1.0.0"
+priority = 100
+
+[compatibility]
+horizon_revision = "294448014fba585f8d5d09dd8886f482493b6417"
+
+[[module]]
+id = "build"
+file = "crates/horizon-client/src/mobs/render.rs"
+name = "umbx_voxel_build"
+source = "voxels.rs"
+
+[[module]]
+id = "cache"
+file = "crates/horizon-client/src/mobs/render.rs"
+name = "umbx_voxel_cache"
+source = "cache.rs"
+visibility = "pub"
+
+[[module]]
+id = "images"
+file = "crates/horizon-client-render/src/skins.rs"
+name = "umbx_voxel_images"
+source = "images.rs"
+visibility = "pub"
+
+[[module]]
+id = "glue"
+file = "crates/horizon-client/src/game.rs"
+name = "umbx_voxel_glue"
+source = "glue.rs"
+
+[[injection]]
+id = "render"
+kind = "HEAD"
+target = "horizon_client_lib::mobs::render::render_with"
+helper = "hooks/render.rs"
+bindings = [
+  { name = "m", ty = "&Mob", value = "m" },
+  { name = "alpha", ty = "f32", value = "alpha" },
+  { name = "camera", ty = "glam::DVec3", value = "camera" },
+  { name = "atlas", ty = "Atlas<'_>", value = "atlas" },
+  { name = "light", ty = "u32", value = "light" },
+  { name = "data", ty = "&MobData", value = "data" },
+  { name = "out", ty = "&mut Vec<Vertex>", value = "out" },
+]
+
+[[injection]]
+id = "frame"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_frame"
+helper = "hooks/frame.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+[[injection]]
+id = "list"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
+helper = "hooks/list.rs"
+bindings = [
+  { name = "mods", ty = "&mut Vec<crate::mod_api::NativeMod>", value = "&mut *mods" },
+]
+
+[[injection]]
+id = "settings"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings"
+helper = "hooks/settings.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "buttons", ty = "&mut Vec<String>", value = "&mut *buttons" },
+]
+
+[[injection]]
+id = "click"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings_click"
+helper = "hooks/click.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "button", ty = "usize", value = "button" },
+]

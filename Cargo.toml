@@ -1,0 +1,7 @@
+[package]
+name = "horizon-voxel-skins"
+version = "1.0.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Voxel Skins for Horizon, a native mod: the outer skin layer drawn as real 3D pixels."
