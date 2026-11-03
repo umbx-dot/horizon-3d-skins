@@ -1,2 +1,2 @@
-#[path = "../mixins/voxel_skins/voxels.rs"]
-pub mod umbx_voxel_build;
+#[path = "../mixins/skins_3d/voxels.rs"]
+pub mod umbx_skins3d_build;

@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-BUNDLE = ROOT / "mixins" / "voxel_skins"
+BUNDLE = ROOT / "mixins" / "skins_3d"
 COMPATIBILITY = json.loads((ROOT / "compatibility.json").read_text(encoding="utf-8"))
 
 

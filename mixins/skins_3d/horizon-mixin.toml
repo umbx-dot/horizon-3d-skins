@@ -1,5 +1,5 @@
 [mod]
-id = "voxel_skins"
+id = "skins_3d"
 version = "1.0.0"
 priority = 100
 
@@ -9,27 +9,27 @@ horizon_revision = "294448014fba585f8d5d09dd8886f482493b6417"
 [[module]]
 id = "build"
 file = "crates/horizon-client/src/mobs/render.rs"
-name = "umbx_voxel_build"
+name = "umbx_skins3d_build"
 source = "voxels.rs"
 
 [[module]]
 id = "cache"
 file = "crates/horizon-client/src/mobs/render.rs"
-name = "umbx_voxel_cache"
+name = "umbx_skins3d_cache"
 source = "cache.rs"
 visibility = "pub"
 
 [[module]]
 id = "images"
 file = "crates/horizon-client-render/src/skins.rs"
-name = "umbx_voxel_images"
+name = "umbx_skins3d_images"
 source = "images.rs"
 visibility = "pub"
 
 [[module]]
 id = "glue"
 file = "crates/horizon-client/src/game.rs"
-name = "umbx_voxel_glue"
+name = "umbx_skins3d_glue"
 source = "glue.rs"
 
 [[injection]]

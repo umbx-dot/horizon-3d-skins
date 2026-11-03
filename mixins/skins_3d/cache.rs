@@ -1,4 +1,4 @@
-use super::umbx_voxel_build::{self as build, Image, MAX_FACES};
+use super::umbx_skins3d_build::{self as build, Image, MAX_FACES};
 use super::{Atlas, Mob, MobData, Part, base_transform, part_matrix, posed_body};
 use crate::mesher::Vertex;
 use crate::mobs::{Polygon, render_model};

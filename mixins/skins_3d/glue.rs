@@ -1,8 +1,8 @@
 use super::Game;
-use horizon_client::mobs::render::umbx_voxel_cache as voxels;
-use horizon_client::skins::umbx_voxel_images as images;
+use horizon_client::mobs::render::umbx_skins3d_cache as voxels;
+use horizon_client::skins::umbx_skins3d_images as images;
 
-pub(super) const ID: &str = "voxel_skins";
+pub(super) const ID: &str = "skins_3d";
 const VERSION: &str = "1.0.0";
 const DESCRIPTION: &str = "The outer layer of every skin as real 3D pixels: hat, jacket, sleeves and pants.";
 const REACH: &str = "reach";
@@ -51,7 +51,7 @@ pub(super) fn frame(game: &mut Game<'_>) {
 pub(super) fn listed(mods: &mut Vec<horizon_client::mod_api::NativeMod>) {
     mods.push(horizon_client::mod_api::NativeMod {
         id: ID.into(),
-        title: format!("Voxel Skins {VERSION}"),
+        title: format!("3D Skins {VERSION}"),
         description: DESCRIPTION.into(),
         keys: Vec::new(),
     });
