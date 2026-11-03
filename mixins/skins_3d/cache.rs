@@ -107,6 +107,8 @@ pub fn draw(m: &Mob, alpha: f32, camera: glam::DVec3, atlas: Atlas<'_>, light: u
                 Some(skin) => {
                     let (model, _, _) = posed_body(m, alpha, data);
                     let built = mesh(&model, skin);
+                    let faces: usize = built.iter().flat_map(|parts| parts.iter()).map(|(_, _, part)| part.polygons.len()).sum();
+                    log::info!("3D Skins: {location} ({}) has {faces} voxel faces", if m.slim { "slim" } else { "wide" });
                     cache.meshes.insert(key, built.clone());
                     built
                 }

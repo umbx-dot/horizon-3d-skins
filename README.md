@@ -7,7 +7,7 @@ A native mod for [Horizon](https://github.com/horizon-rust/horizon). The outer l
 ## What it does
 
 * Every opaque pixel of a skin's outer layer becomes a small block that sits on the body and follows the head, arms and legs exactly as the game moves them: walking, sneaking, swinging, riding and in the inventory preview.
-* Works for your own player and for everyone else you can see, with classic and slim arms and with HD skins.
+* Works for your own player and for everyone else you can see, with downloaded, launcher and default skins, classic and slim arms and HD skins.
 * Parts a player turned off in Skin Customization (for example the hat) stay hidden.
 * Up close you see the 3D layer; further away the normal flat layer takes over, so crowded places stay fast.
 
