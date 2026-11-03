@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex};
 
 pub(super) const ID: &str = "skins_3d";
-const VERSION: &str = "1.0.0";
+const VERSION: &str = "1.0.1";
 const DESCRIPTION: &str = "The outer layer of every skin as real 3D pixels: hat, jacket, sleeves and pants.";
 const REACH: &str = "reach";
 const REACHES: [u32; 4] = [8, 16, 32, 64];
