@@ -1,45 +1,34 @@
 use super::umbx_skins3d_build::{self as build, Image, MAX_FACES};
-use super::{Atlas, Mob, MobData, Part, base_transform, part_matrix, posed_body};
-use crate::mesher::Vertex;
-use crate::mobs::{Polygon, render_model};
+use crate::mobs::{MobType, Part, Polygon};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, LazyLock, Mutex, MutexGuard};
 
 pub const PLAYER: &str = "minecraft:player";
-pub const LAYERS: [(&str, &str); 6] = [("hat", "head"), ("jacket", "body"), ("left_sleeve", "left_arm"), ("right_sleeve", "right_arm"), ("left_pants", "left_leg"), ("right_pants", "right_leg")];
+pub const HAT: u8 = 1;
+pub const JACKET_AND_SLEEVES: u8 = 2 | 4 | 8;
+pub const PANTS: u8 = 16 | 32;
+pub const ALL: u8 = HAT | JACKET_AND_SLEEVES | PANTS;
+const LAYERS: [&str; 6] = ["hat", "jacket", "left_sleeve", "right_sleeve", "left_pants", "right_pants"];
 const MAX_SKINS: usize = 96;
 const MAX_WANTED: usize = 64;
-const REST: [f32; 9] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
-
-type Mesh = Arc<Vec<(&'static str, &'static str, Part)>>;
 
 struct Skin {
     width: usize,
     height: usize,
     rgba: Vec<u8>,
+    models: HashMap<(bool, u8), Arc<Part>>,
 }
 
 struct Cache {
-    enabled: bool,
-    reach: f64,
     skins: HashMap<String, Skin>,
-    meshes: HashMap<(String, bool), Option<Mesh>>,
     order: VecDeque<String>,
     wanted: HashSet<String>,
 }
 
-static CACHE: LazyLock<Mutex<Cache>> = LazyLock::new(|| {
-    Mutex::new(Cache { enabled: false, reach: 16.0, skins: HashMap::new(), meshes: HashMap::new(), order: VecDeque::new(), wanted: HashSet::new() })
-});
+static CACHE: LazyLock<Mutex<Cache>> = LazyLock::new(|| Mutex::new(Cache { skins: HashMap::new(), order: VecDeque::new(), wanted: HashSet::new() }));
 
 fn cache() -> MutexGuard<'static, Cache> {
     CACHE.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
-}
-
-pub fn configure(enabled: bool, reach: f64) {
-    let mut cache = cache();
-    cache.enabled = enabled;
-    cache.reach = reach;
 }
 
 pub fn wanted() -> Vec<String> {
@@ -57,79 +46,50 @@ pub fn offer(location: &str, width: usize, height: usize, rgba: &[u8]) {
     while cache.order.len() >= MAX_SKINS {
         if let Some(old) = cache.order.pop_front() {
             cache.skins.remove(&old);
-            cache.meshes.retain(|(skin, _), _| *skin != old);
         }
     }
     cache.order.push_back(location.to_owned());
-    cache.skins.insert(location.to_owned(), Skin { width, height, rgba: rgba.to_vec() });
+    cache.skins.insert(location.to_owned(), Skin { width, height, rgba: rgba.to_vec(), models: HashMap::new() });
 }
 
-fn find<'a>(part: &'a Part, name: &str) -> Option<&'a Part> {
-    if part.name == name {
-        return Some(part);
+fn layered(part: &mut Part, image: &Image, shown: u8, faces: &mut usize) {
+    if let Some(bit) = LAYERS.iter().position(|layer| *layer == part.name)
+        && shown & (1 << bit) != 0
+    {
+        let quads: Vec<build::Quad> = part.polygons.iter().map(|p| (p.normal, p.vertices)).collect();
+        if let Some(built) = build::voxels(&quads, image, MAX_FACES) {
+            *faces += built.len();
+            part.polygons = built.into_iter().map(|(normal, vertices)| Polygon { normal, vertices, cull_back: false }).collect();
+        }
     }
-    part.children.iter().find_map(|c| find(c, name))
+    for child in &mut part.children {
+        layered(child, image, shown, faces);
+    }
 }
 
-fn mesh(model: &Part, skin: &Skin) -> Option<Mesh> {
-    let image = Image::new(skin.width, skin.height, &skin.rgba)?;
-    let mut parts = Vec::new();
-    let mut total = 0;
-    for (layer, parent) in LAYERS {
-        let Some(source) = find(model, layer) else { continue };
-        let quads: Vec<build::Quad> = source.polygons.iter().map(|p| (p.normal, p.vertices)).collect();
-        let faces = build::voxels(&quads, &image, MAX_FACES - total);
-        total += faces.len();
-        if faces.is_empty() {
-            continue;
-        }
-        let polygons = faces.into_iter().map(|(normal, vertices)| Polygon { normal, vertices, cull_back: false }).collect();
-        parts.push((layer, parent, Part { name: format!("voxel_{layer}"), pose: REST, polygons, children: Vec::new() }));
+pub fn model(kind: &MobType, location: &str, slim: bool, shown: u8) -> Option<Arc<Part>> {
+    if shown == 0 {
+        return None;
     }
-    (!parts.is_empty()).then(|| Arc::new(parts))
-}
-
-pub fn draw(m: &Mob, alpha: f32, camera: glam::DVec3, atlas: Atlas<'_>, light: u32, data: &MobData, out: &mut Vec<Vertex>) {
-    if m.kind.id != PLAYER || super::super::trader::is_invisible(m) {
-        return;
-    }
-    let Some(location) = m.skin.as_deref() else { return };
-    let mesh = {
-        let mut cache = cache();
-        let offset = glam::DVec3::new(m.position.x, m.position.y, m.position.z) - camera;
-        if !cache.enabled || offset.length() > cache.reach {
-            return;
+    let mut cache = cache();
+    let Some(skin) = cache.skins.get_mut(location) else {
+        if cache.wanted.len() < MAX_WANTED {
+            cache.wanted.insert(location.to_owned());
         }
-        let key = (location.to_owned(), m.slim);
-        match cache.meshes.get(&key) {
-            Some(mesh) => mesh.clone(),
-            None => match cache.skins.get(location) {
-                Some(skin) => {
-                    let (model, _, _) = posed_body(m, alpha, data);
-                    let built = mesh(&model, skin);
-                    let faces: usize = built.iter().flat_map(|parts| parts.iter()).map(|(_, _, part)| part.polygons.len()).sum();
-                    log::info!("3D Skins: {location} ({}) has {faces} voxel faces", if m.slim { "slim" } else { "wide" });
-                    cache.meshes.insert(key, built.clone());
-                    built
-                }
-                None => {
-                    if cache.wanted.len() < MAX_WANTED {
-                        cache.wanted.insert(location.to_owned());
-                    }
-                    None
-                }
-            },
-        }
+        return None;
     };
-    let (Some(mesh), Some(uv)) = (mesh, atlas(location)) else { return };
-    let (model, poses, _) = posed_body(m, alpha, data);
-    let base = base_transform(m, alpha, camera);
-    for (layer, parent, part) in mesh.iter() {
-        if poses.is_hidden_named(parent) || poses.is_hidden_named(layer) || poses.skips_named(layer) {
-            continue;
-        }
-        if let Some(matrix) = part_matrix(&model, base, &poses, layer, 0.0) {
-            render_model(part, matrix, &|p| p.pose, uv, light, 0, out);
-        }
+    if let Some(model) = skin.models.get(&(slim, shown)) {
+        return Some(model.clone());
     }
+    let image = Image::new(skin.width, skin.height, &skin.rgba)?;
+    let key = if slim { "player_slim#main" } else { "main" };
+    let mut part = kind.layer(key).map_or_else(|| (*kind.model).clone(), |model| (**model).clone());
+    let mut faces = 0;
+    layered(&mut part, &image, shown, &mut faces);
+    if shown == ALL {
+        log::info!("3D Skins: {location} ({}) has {faces} faces", if slim { "slim" } else { "wide" });
+    }
+    let model = Arc::new(part);
+    skin.models.insert((slim, shown), model.clone());
+    Some(model)
 }

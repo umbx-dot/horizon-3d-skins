@@ -1,10 +1,10 @@
 [mod]
 id = "skins_3d"
-version = "1.0.1"
+version = "1.1.0"
 priority = 100
 
 [compatibility]
-horizon_revision = "294448014fba585f8d5d09dd8886f482493b6417"
+horizon_revision = "66f3981f522b24c250b21523a70080965b940424"
 
 [[module]]
 id = "build"
@@ -20,31 +20,36 @@ source = "cache.rs"
 visibility = "pub"
 
 [[module]]
-id = "images"
-file = "crates/horizon-client-render/src/skins.rs"
-name = "umbx_skins3d_images"
-source = "images.rs"
-visibility = "pub"
-
-[[module]]
 id = "glue"
 file = "crates/horizon-client/src/game.rs"
 name = "umbx_skins3d_glue"
 source = "glue.rs"
 
 [[injection]]
-id = "render"
+id = "model"
 kind = "HEAD"
-target = "horizon_client_lib::mobs::render::render_with"
-helper = "hooks/render.rs"
+cancellable = true
+target = "horizon_client::game::remote::Game<'_>::skin_3d_model"
+helper = "hooks/model.rs"
 bindings = [
-  { name = "m", ty = "&Mob", value = "m" },
-  { name = "alpha", ty = "f32", value = "alpha" },
-  { name = "camera", ty = "glam::DVec3", value = "camera" },
-  { name = "atlas", ty = "Atlas<'_>", value = "atlas" },
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "kind", ty = "&std::sync::Arc<horizon_client::mobs::MobType>", value = "kind" },
+  { name = "skin", ty = "&str", value = "skin" },
+  { name = "slim", ty = "bool", value = "slim" },
+]
+
+[[injection]]
+id = "arm"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::Game<'_>::first_person_arm"
+helper = "hooks/arm.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "left", ty = "bool", value = "left" },
+  { name = "matrix", ty = "glam::Mat4", value = "m" },
   { name = "light", ty = "u32", value = "light" },
-  { name = "data", ty = "&MobData", value = "data" },
-  { name = "out", ty = "&mut Vec<Vertex>", value = "out" },
+  { name = "out", ty = "&mut Vec<horizon_client::mesher::Vertex>", value = "&mut *out" },
 ]
 
 [[injection]]
