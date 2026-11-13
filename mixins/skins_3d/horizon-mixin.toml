@@ -1,10 +1,10 @@
 [mod]
 id = "skins_3d"
-version = "1.1.0"
+version = "1.1.1"
 priority = 100
 
 [compatibility]
-horizon_revision = "66f3981f522b24c250b21523a70080965b940424"
+horizon_revision = "9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0"
 
 [[module]]
 id = "build"
@@ -42,7 +42,7 @@ bindings = [
 id = "arm"
 kind = "HEAD"
 cancellable = true
-target = "horizon_client::game::Game<'_>::first_person_arm"
+target = "horizon_client::game::frame_geometry::Game<'_>::first_person_arm"
 helper = "hooks/arm.rs"
 bindings = [
   { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },

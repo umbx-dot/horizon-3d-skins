@@ -55,7 +55,7 @@ You need Rust 1.95 or newer, Python 3.12 or newer, a Horizon checkout at the com
 | `python tools/bundle.py package` | Writes `build/skins_3d-<version>.hnmod` |
 | `python tools/make_icon.py` | Redraws `icon.png` |
 
-Made for Horizon Nightly 2026.11.05 (commit `66f3981`) with horizon-mixins `5a64af9`. Tested on Windows 11.
+Made for Horizon Nightly 2026.11.13 (commit `9f42064`) with horizon-mixins `e59da90`. Tested on Windows 11.
 
 ## License
 
