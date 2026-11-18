@@ -1,7 +1,9 @@
 [package]
-name = "horizon-3d-skins"
-version = "1.1.1"
+name = "mod-skins_3d"
+version = "2.0.0"
 edition = "2024"
 license = "MIT"
 publish = false
-description = "3D Skins for Horizon, a native mod: the outer skin layer drawn as real 3D pixels."
+
+[dependencies]
+horizon-mod-api = { path = ".horizon/sdk/api/crates/horizon-mod-api" }

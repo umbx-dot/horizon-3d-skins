@@ -1,4 +1,4 @@
-use super::umbx_skins3d_build::{self as build, Image, MAX_FACES};
+use mod_skins_3d::voxels::{self as build, Image, MAX_FACES};
 use crate::mobs::{MobType, Part, Polygon};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, LazyLock, Mutex, MutexGuard};

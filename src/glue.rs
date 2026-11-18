@@ -1,32 +1,20 @@
 use super::Game;
-use horizon_client::mobs::render::umbx_skins3d_cache as voxels;
+use super::umbx_skins3d_cache as voxels;
 use horizon_client::mesher::Vertex;
-use horizon_client::mobs::{Mob, MobType, Part, render_model};
+use horizon_client::mobs::{Mob, MobType, Part, gear, render_model};
 use std::collections::HashSet;
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex};
 
-pub(super) const ID: &str = "skins_3d";
-const VERSION: &str = "1.1.1";
-const DESCRIPTION: &str = "The outer layer of every skin as real 3D pixels: hat, jacket, sleeves and pants.";
-const REACH: &str = "reach";
-const REACHES: [u32; 4] = [8, 16, 32, 64];
-const DEFAULT_REACH: u32 = 32;
 const SKIN_EDGE: usize = 64;
 const MAX_MISSING: usize = 512;
 
 const OFFLINE_SKIN: &str = "horizon/offline_skin";
 const ELYTRA: &str = "minecraft:elytra";
 
-static ACTIVE: AtomicBool = AtomicBool::new(false);
 static MISSING: LazyLock<Mutex<HashSet<String>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
 static LOGGED: LazyLock<Mutex<HashSet<String>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
-
-fn reach(game: &Game<'_>) -> u32 {
-    game.native_setting(ID, REACH).and_then(|v| v.parse().ok()).filter(|r| REACHES.contains(r)).unwrap_or(DEFAULT_REACH)
-}
 
 fn size(bytes: usize) -> Option<(usize, usize)> {
     let pixels = bytes / 4;
@@ -83,26 +71,11 @@ fn swap(m: &mut Mob, near: bool, shown: u8) {
     }
 }
 
-fn restore(game: &mut Game<'_>) {
-    for m in game.mobs.iter_mut().chain(game.player_model.iter_mut()) {
-        if &*m.kind.id == voxels::PLAYER {
-            m.skin_3d = None;
-        }
-    }
-    game.update_remote_skins();
-}
-
-pub(super) fn model(game: &Game<'_>, kind: &Arc<MobType>, skin: &str, slim: bool) -> ControlFlow<Option<Arc<Part>>> {
-    if !game.native_on(ID) {
-        return ControlFlow::Continue(());
-    }
+pub(super) fn model(kind: &Arc<MobType>, skin: &str, slim: bool) -> ControlFlow<Option<Arc<Part>>> {
     ControlFlow::Break(voxels::model(kind, skin, slim, voxels::ALL))
 }
 
 pub(super) fn arm(game: &Game<'_>, left: bool, matrix: glam::Mat4, light: u32, out: &mut Vec<Vertex>) -> ControlFlow<()> {
-    if !game.native_on(ID) {
-        return ControlFlow::Continue(());
-    }
     let player = game.player_model.as_ref();
     let name = if left { "left_arm" } else { "right_arm" };
     let part = player.and_then(|m| m.skin_3d.as_ref()).and_then(|model| model.children.iter().find(|c| c.name == name));
@@ -123,15 +96,8 @@ pub(super) fn arm(game: &Game<'_>, left: bool, matrix: glam::Mat4, light: u32, o
 }
 
 pub(super) fn frame(game: &mut Game<'_>) {
-    if !game.native_on(ID) {
-        if ACTIVE.swap(false, Ordering::Relaxed) {
-            restore(game);
-        }
-        return;
-    }
-    ACTIVE.store(true, Ordering::Relaxed);
-    let reach = f64::from(reach(game));
-    let camera = game.native_camera().map(|c| c.position);
+    let reach = f64::from(mod_skins_3d::reach());
+    let camera = game.camera().map(|c| c.position);
     let near = |x: f64, y: f64, z: f64| camera.is_none_or(|c| (x - c[0]).powi(2) + (y - c[1]).powi(2) + (z - c[2]).powi(2) <= reach * reach);
     let [head, chest, legs, _] = game.armor.each_ref().map(|s| s.as_ref().map(|s| &*s.item));
     let own = shown(head.is_some(), chest, legs.is_some());
@@ -140,7 +106,8 @@ pub(super) fn frame(game: &mut Game<'_>) {
         swap(m, close, own);
     }
     for m in game.mobs.iter_mut().filter(|m| &*m.kind.id == voxels::PLAYER) {
-        let worn = shown(m.extra.head.is_some(), m.extra.chest.as_deref(), m.extra.legs.is_some());
+        let equipment = &m.extra.equipment;
+        let worn = shown(equipment.get(gear::HEAD).is_some(), equipment.get(gear::CHEST).map(|s| &*s.item), equipment.get(gear::LEGS).is_some());
         let close = near(m.position.x, m.position.y, m.position.z);
         swap(m, close, worn);
     }
@@ -184,28 +151,4 @@ pub(super) fn frame(game: &mut Game<'_>) {
             }
         }
     }
-}
-
-pub(super) fn listed(mods: &mut Vec<horizon_client::mod_api::NativeMod>) {
-    mods.push(horizon_client::mod_api::NativeMod {
-        id: ID.into(),
-        title: format!("3D Skins {VERSION}"),
-        description: DESCRIPTION.into(),
-        keys: Vec::new(),
-    });
-}
-
-pub(super) fn page(game: &Game<'_>, mod_id: &str, buttons: &mut Vec<String>) {
-    if mod_id == ID {
-        buttons.push(format!("3D layers within: {} blocks", reach(game)));
-    }
-}
-
-pub(super) fn click(game: &mut Game<'_>, mod_id: &str, button: usize) {
-    if mod_id != ID || button != 0 {
-        return;
-    }
-    let now = reach(game);
-    let next = REACHES[(REACHES.iter().position(|r| *r == now).unwrap_or(0) + 1) % REACHES.len()];
-    game.native_set_setting(ID, REACH, &next.to_string());
 }

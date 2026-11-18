@@ -1,0 +1,60 @@
+id = "skins_3d"
+name = "3D Skins"
+version = "2.0.0"
+description = "The outer layer of every player's skin drawn as real 3D pixels: hat, jacket, sleeves and pants."
+authors = ["_idom_"]
+api = "0.2"
+side = "client"
+capabilities = ["registries"]
+
+[native]
+game = "26.3"
+horizon = "0b14f8acfd97fa2c750e42795249dcc981178ca4"
+mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
+
+[[native.module]]
+id = "cache"
+file = "crates/horizon-client/src/game.rs"
+name = "umbx_skins3d_cache"
+source = "src/cache.rs"
+
+[[native.module]]
+id = "glue"
+file = "crates/horizon-client/src/game.rs"
+name = "umbx_skins3d_glue"
+source = "src/glue.rs"
+
+[[native.mixin]]
+id = "model"
+target = "horizon_client::game::remote::Game<'_>::skin_3d_model"
+kind = "HEAD"
+cancellable = true
+helper = "src/mixins/model.rs"
+bindings = [
+  { name = "kind", ty = "&std::sync::Arc<horizon_client::mobs::MobType>", value = "kind" },
+  { name = "skin", ty = "&str", value = "skin" },
+  { name = "slim", ty = "bool", value = "slim" },
+]
+
+[[native.mixin]]
+id = "arm"
+target = "horizon_client::game::frame_geometry::Game<'_>::first_person_arm"
+kind = "HEAD"
+cancellable = true
+helper = "src/mixins/arm.rs"
+bindings = [
+  { name = "game", ty = "&Game<'_>", value = "&*self" },
+  { name = "left", ty = "bool", value = "left" },
+  { name = "matrix", ty = "glam::Mat4", value = "m" },
+  { name = "light", ty = "u32", value = "light" },
+  { name = "out", ty = "&mut Vec<Vertex>", value = "&mut *out" },
+]
+
+[[native.mixin]]
+id = "frame"
+target = "horizon_client::game::native_hooks::render_frame_pre::Game<'_>::native_render_frame_pre"
+kind = "HEAD"
+helper = "src/mixins/frame.rs"
+bindings = [
+  { name = "game", ty = "&mut Game<'_>", value = "&mut *self" },
+]

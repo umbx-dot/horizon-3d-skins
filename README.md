@@ -36,9 +36,8 @@ Open Options, Mods, 3D Skins.
 
 | Setting | Default | What it does |
 |---|---|---|
-| 3D layers within | 32 blocks | Players closer than this get the 3D layer. Click to step through 8, 16, 32 and 64 |
+| 3D layers within | 32 blocks | Players closer than this get the 3D layer: 8, 16, 32 or 64 |
 
-Turn the whole mod off on the same page.
 
 ## Install
 
@@ -46,16 +45,16 @@ In the Horizon launcher, open Mods and install 3D Skins, or use Add from GitHub 
 
 ## Build from source
 
-You need Rust 1.95 or newer, Python 3.12 or newer, a Horizon checkout at the commit in `compatibility.json`, and the horizon-mixins tool at the revision listed there.
+3D Skins is a `.hmod`: Rust source that the launcher compiles against the prebuilt Horizon build pinned in `horizon-mod.toml` (`[native] horizon`). You need Rust and Horizon's `cargo horizon-mod` tool.
 
 | Command | What it does |
 |---|---|
-| `cargo test` | Runs the tests of the mesh builder |
-| `python tools/bundle.py apply --horizon <horizon> --mixins-tool <horizon-mixins> --out <stage> --check-target <target>` | Applies the mod to Horizon and checks that the game compiles |
-| `python tools/bundle.py package` | Writes `build/skins_3d-<version>.hnmod` |
-| `python tools/make_icon.py` | Redraws `icon.png` |
+| `cargo horizon-mod check` | Fetches the pinned build's SDK into `.horizon/sdk/` and checks the mod's crate |
+| `cargo test --lib` | Runs the tests of the mesh builder |
+| `horizon-launcher native-build <this folder> --instance <instance> --trust-native-code` | Compiles the mod and its mixins against the prebuilt game |
+| `cargo horizon-mod build` | Writes `target/horizon-mod/skins_3d.hmod` |
 
-Made for Horizon Nightly 2026.11.13 (commit `9f42064`) with horizon-mixins `e59da90`. Tested on Windows 11.
+Made for Horizon Nightly 2026-11-18 (commit `0b14f8a`). The setting uses the mod API; the model, the first-person sleeves and the per-frame update reach into Horizon's own code through three `[[native.mixin]]` rows, so each Horizon build needs a new version.
 
 ## License
 
