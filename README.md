@@ -54,7 +54,7 @@ In the Horizon launcher, open Mods and install 3D Skins, or use Add from GitHub 
 | `horizon-launcher native-build <this folder> --instance <instance> --trust-native-code` | Compiles the mod and its mixins against the prebuilt game |
 | `cargo horizon-mod build` | Writes `target/horizon-mod/skins_3d.hmod` |
 
-Made for Horizon Nightly 2026-11-18 (commit `0b14f8a`). The setting uses the mod API; the model, the first-person sleeves and the per-frame update reach into Horizon's own code through three `[[native.mixin]]` rows, so each Horizon build needs a new version.
+Made for Horizon Nightly 2026-11-20 (commit `0a875da`). The setting uses the mod API; the model, the first-person sleeves and the per-frame update reach into Horizon's own code through three `[[native.mixin]]` rows, so each Horizon build needs a new version.
 
 ## License
 
