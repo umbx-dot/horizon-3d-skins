@@ -3,6 +3,7 @@ name = "3D Skins"
 version = "2.0.1"
 description = "The outer layer of every player's skin drawn as real 3D pixels: hat, jacket, sleeves and pants."
 authors = ["_idom_"]
+license = "MIT"
 api = "0.2"
 side = "client"
 capabilities = ["registries"]
